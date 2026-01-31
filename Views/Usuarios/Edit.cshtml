@@ -1,0 +1,136 @@
+@model AticaApp.Models.Usuario
+@{
+    ViewData["Title"] = "Editar Usuario";
+    var rolActual = ViewBag.RolActual as string;
+    // Determinamos si debe estar bloqueado inicialmente
+    string esSoloLectura = (rolActual == "Usuario") ? "readonly" : "";
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Perfil de Usuario: @Model.Username</h4>
+            @if (rolActual == "Usuario")
+            {
+                <button type="button" id="btnHabilitar" class="btn btn-sm btn-outline-dark" onclick="habilitarEdicion()">
+                    Habilitar Edición
+                </button>
+            }
+        </div>
+        <div class="card-body">
+            <form id="editUserForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="UserId" value="@Model.Id" />
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" id="Nombre" class="form-control" value="@Model.Nombre" @esSoloLectura />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Apellido</label>
+                        <input type="text" id="Apellido" class="form-control" value="@Model.Apellido" @esSoloLectura />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Documento</label>
+                        <input type="text" id="Documento" class="form-control" value="@Model.Documento" @esSoloLectura />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Nombre de Usuario (Username)</label>
+                        <input type="text" id="Username" class="form-control" value="@Model.Username" @esSoloLectura />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="Email" class="form-control" value="@Model.Email" @esSoloLectura />
+                </div>
+
+                @* La contraseña solo se habilita si el usuario decide editar *@
+                <div class="mb-3">
+                    <label class="form-label">Nueva Contraseña (opcional)</label>
+                    <input type="password" id="PasswordPlano" class="form-control" placeholder="Dejar vacío para conservar la actual" @esSoloLectura />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Rol</label>
+                    @if (rolActual == "Administrador")
+                    {
+                        <select id="Rol" class="form-select">
+                            <option value="Administrador" selected="@(Model.Rol == "Administrador")">Administrador</option>
+                            <option value="Usuario" selected="@(Model.Rol == "Usuario")">Usuario</option>
+                        </select>
+                    }
+                    else
+                    {
+                        <input type="text" id="Rol" class="form-control" value="@Model.Rol" readonly />
+                    }
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">Volver</a>
+                    @* El botón de guardar se puede ocultar o deshabilitar hasta que se pulse "Editar" *@
+                    <button type="button" id="btnGuardar" class="btn btn-warning px-4"
+                            style="@(rolActual == "Usuario" ? "display:none;" : "")"
+                            onclick="guardarCambios()">
+                        Actualizar Datos
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Función para quitar el readonly mediante JS
+        function habilitarEdicion() {
+            // Buscamos todos los inputs excepto el de Rol
+            $('#editUserForm input').not('#Rol').removeAttr('readonly');
+            // Mostramos el botón de guardar
+            $('#btnGuardar').fadeIn();
+            // Ocultamos el botón de habilitar
+            $('#btnHabilitar').fadeOut();
+
+            alert("Campos habilitados para edición.");
+        }
+
+        function guardarCambios() {
+            const usuarioObj = {
+                Id: $('#UserId').val(),
+                Nombre: $('#Nombre').val(),
+                Apellido: $('#Apellido').val(),
+                Documento: $('#Documento').val(),
+                Username: $('#Username').val(),
+                Email: $('#Email').val(),
+                Rol: $('#Rol').val()
+            };
+
+            const passPlano = $('#PasswordPlano').val();
+
+            $.ajax({
+                url: '@Url.Action("Edit", "Usuarios")',
+                type: 'POST',
+                data: {
+                    id: usuarioObj.Id,
+                    usuario: usuarioObj,
+                    passwordPlano: passPlano
+                },
+                headers: {
+                    "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function () {
+                    alert("¡Éxito! Los cambios se han guardado.");
+                    window.location.href = '@Url.Action("Index", "Usuarios")';
+                },
+                error: function (xhr) {
+                    alert("Error al actualizar: " + xhr.responseText);
+                }
+            });
+        }
+    </script>
+}

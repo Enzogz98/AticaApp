@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - AticaApp</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                @* El logo ahora redirige al Index si es Admin o al Login si no hay sesión *@
+                <a class="navbar-brand" href="/">AticaApp</a>
+
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
+                    <ul class="navbar-nav">
+                        @if (Context.Session.GetString("RolActual") != null)
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link text-info me-3">Hola, @Context.Session.GetString("RolActual")</span>
+                            </li>
+                            <li class="nav-item">
+                                @* Cambiamos el href para que no interfiera con el onclick *@
+                                <button class="btn btn-link nav-link text-danger border-0" onclick="handleLogout()">Cerrar Sesión</button>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-controller="Account" asp-action="Login">Iniciar Sesión</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted text-center py-3">
+        <div class="container">
+            &copy; 2026 - AticaApp - Sistema de Gestión
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function handleLogout() {
+            console.log("Cerrando sesión..."); // Para debug
+
+            // 1. Limpiar datos del navegador
+            localStorage.removeItem("jwt_token");
+            sessionStorage.clear();
+
+            // 2. Redirigir al servidor para matar la sesión de C#
+            // Usamos la URL absoluta construida por Razor
+            window.location.href = '@Url.Action("Logout", "Account")';
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
